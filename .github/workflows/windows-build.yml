@@ -38,9 +38,18 @@ jobs:
         cd src/win32_build/bin
         windeployqt SoftProjector.exe
 
-    # 5. Packt den fertigen Ordner als ZIP und stellt ihn als Download bereit
-    - name: Fertige App hochladen (Artifact)
+    # 5. Installiert Inno Setup
+    - name: Inno Setup installieren
+      run: choco install innosetup -y --no-progress
+
+    # 6. Erzeugt ein Setup.exe mit Inno Setup
+    - name: Installer bauen (Inno Setup)
+      run: |
+        "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" installer\SoftProjector.iss
+
+    # 7. Lädt den fertigen Installer als Artifact hoch
+    - name: Setup hochladen (Artifact)
       uses: actions/upload-artifact@v4
       with:
-        name: SoftProjector-Windows
-        path: src/win32_build/bin/
+        name: SoftProjector-Setup
+        path: installer/output/SoftProjector-Setup.exe
