@@ -23,6 +23,7 @@ jobs:
         version: '6.5.3'
         target: 'desktop'
         arch: 'win64_mingw'
+        modules: 'qtmultimedia'
 
     # 3. Kompiliert das Projekt im src-Ordner
     - name: Kompilieren (qmake & make)
@@ -34,12 +35,12 @@ jobs:
     # 4. Sammelt alle Windows-Bibliotheken (DLLs) zusammen
     - name: windeployqt ausführen
       run: |
-        cd src/release
-        windeployqt softprojector.exe
+        cd src/win32_build/bin
+        windeployqt SoftProjector.exe
 
     # 5. Packt den fertigen Ordner als ZIP und stellt ihn als Download bereit
     - name: Fertige App hochladen (Artifact)
       uses: actions/upload-artifact@v4
       with:
         name: SoftProjector-Windows
-        path: src/release/
+        path: src/win32_build/bin/
