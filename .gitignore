@@ -35,3 +35,9 @@ unknownsys_build/*
 win32_build/*
 unix_build/*
 mac_build/*
+
+# Mac Build Artefcts
+mac_build/
+.qmake.stash
+Makefile
+*.app

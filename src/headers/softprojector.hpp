@@ -149,6 +149,7 @@ private slots:
     void on_projectTab_currentChanged(int index);
     void updateEditActions();
     void on_actionNew_triggered();
+    void on_actionNewFromOpenXML_triggered();
     void on_actionEdit_triggered();
     void on_actionCopy_triggered();
     void on_actionDelete_triggered();

@@ -18,10 +18,72 @@
 ***************************************************************************/
 
 #include <QWidget>
+#include <QInputDialog>
+#include <QRegularExpression>
 #include "../headers/softprojector.hpp"
 #include "ui_softprojector.h"
 #include "../headers/aboutdialog.hpp"
 #include "../headers/editannouncementdialog.hpp"
+
+namespace {
+
+QString extractOpenXmlTagValue(const QString &openXml, const QString &tagName)
+{
+    const QRegularExpression tagRegex(
+        QStringLiteral("<%1>\\s*([\\s\\S]*?)\\s*</%1>")
+            .arg(QRegularExpression::escape(tagName)),
+        QRegularExpression::DotMatchesEverythingOption | QRegularExpression::CaseInsensitiveOption);
+
+    QRegularExpressionMatch match = tagRegex.match(openXml);
+    if (!match.hasMatch())
+        return QString();
+
+    return match.captured(1).trimmed();
+}
+
+QString normalizeOpenXmlLyrics(const QString &rawLyrics)
+{
+    QString normalizedLyrics = rawLyrics;
+    normalizedLyrics.replace("\r\n", "\n");
+    normalizedLyrics.replace('\r', '\n');
+
+    const QRegularExpression headerRegex(QStringLiteral("^\\s*\\[([^\\]]+)\\]\\s*$"));
+    QStringList lines = normalizedLyrics.split('\n');
+
+    for (int i = 0; i < lines.size(); ++i)
+    {
+        QRegularExpressionMatch match = headerRegex.match(lines.at(i));
+        if (!match.hasMatch())
+            continue;
+
+        const QString sectionToken = match.captured(1).trimmed().toUpper();
+        if (sectionToken.startsWith('V'))
+        {
+            bool ok = false;
+            int verseNumber = sectionToken.mid(1).toInt(&ok);
+            if (ok)
+            {
+                lines[i] = QStringLiteral("Verse %1").arg(verseNumber);
+                continue;
+            }
+        }
+
+        if (sectionToken == QStringLiteral("C")
+            || sectionToken == QStringLiteral("R")
+            || sectionToken == QStringLiteral("CHORUS")
+            || sectionToken == QStringLiteral("REFRAIN"))
+        {
+            lines[i] = QStringLiteral("Refrain");
+            continue;
+        }
+
+        lines[i] = match.captured(1).trimmed();
+    }
+
+    return lines.join('\n').trimmed();
+}
+
+}
 
 SoftProjector::SoftProjector(QWidget *parent)
     : QMainWindow(parent), ui(new Ui::SoftProjectorClass)
@@ -136,6 +198,7 @@ SoftProjector::SoftProjector(QWidget *parent)
     ui->toolBarSchedule->addAction(ui->actionScheduleClear);
 
     ui->toolBarEdit->addAction(ui->actionNew);
+    ui->toolBarEdit->addAction(ui->actionNewFromOpenXML);
     ui->toolBarEdit->addAction(ui->actionEdit);
     ui->toolBarEdit->addAction(ui->actionCopy);
     ui->toolBarEdit->addAction(ui->actionDelete);
@@ -1186,10 +1249,12 @@ void SoftProjector::updateEditActions()
     else if(ctab == 1) // Song Tab
     {
         ui->actionNew->setText(tr("&New Song..."));
+        ui->actionNewFromOpenXML->setText(tr("New Song from &OpenXML..."));
         ui->actionEdit->setText(tr("&Edit Song..."));
         ui->actionCopy->setText(tr("&Copy Song..."));
         ui->actionDelete->setText(tr("&Delete Song"));
         ui->actionNew->setIcon(QIcon(":/icons/icons/song_new.png"));
+        ui->actionNewFromOpenXML->setIcon(QIcon(":/icons/icons/song_new.png"));
         ui->actionEdit->setIcon(QIcon(":/icons/icons/song_edit.png"));
         ui->actionCopy->setIcon(QIcon(":/icons/icons/song_copy.png"));
         ui->actionDelete->setIcon(QIcon(":/icons/icons/song_delete.png"));
@@ -1201,6 +1266,8 @@ void SoftProjector::updateEditActions()
         ui->actionCopy->setText("");
         ui->actionDelete->setText(tr("&Delete Slide Show"));
         ui->actionNew->setIcon(QIcon(":/icons/icons/slideshow_new.png"));
+        ui->actionNewFromOpenXML->setText("");
+        ui->actionNewFromOpenXML->setIcon(QIcon());
         ui->actionEdit->setIcon(QIcon(":/icons/icons/slideshow_edit.png"));
         ui->actionCopy->setIcon(QIcon());
         ui->actionDelete->setIcon(QIcon(":/icons/icons/slideshow_delete.png"));
@@ -1212,6 +1279,8 @@ void SoftProjector::updateEditActions()
         ui->actionCopy->setText("");
         ui->actionDelete->setText(tr("&Remove Media Files"));
         ui->actionNew->setIcon(QIcon(":/icons/icons/video_add.png"));
+        ui->actionNewFromOpenXML->setText("");
+        ui->actionNewFromOpenXML->setIcon(QIcon());
         ui->actionEdit->setIcon(QIcon());
         ui->actionCopy->setIcon(QIcon());
         ui->actionDelete->setIcon(QIcon(":/icons/icons/video_remove.png"));
@@ -1223,6 +1292,8 @@ void SoftProjector::updateEditActions()
         ui->actionCopy->setText(tr("&Copy Announcement..."));
         ui->actionDelete->setText(tr("&Delete Announcement"));
         ui->actionNew->setIcon(QIcon(":/icons/icons/announce_new.png"));
+        ui->actionNewFromOpenXML->setText("");
+        ui->actionNewFromOpenXML->setIcon(QIcon());
         ui->actionEdit->setIcon(QIcon(":/icons/icons/announce_edit.png"));
         ui->actionCopy->setIcon(QIcon(":/icons/icons/announce_copy.png"));
         ui->actionDelete->setIcon(QIcon(":/icons/icons/announce_delete.png"));
@@ -1234,6 +1305,8 @@ void SoftProjector::updateEditActions()
         ui->actionCopy->setText("");
         ui->actionDelete->setText("");
         ui->actionNew->setIcon(QIcon());
+        ui->actionNewFromOpenXML->setText("");
+        ui->actionNewFromOpenXML->setIcon(QIcon());
         ui->actionEdit->setIcon(QIcon());
         ui->actionCopy->setIcon(QIcon());
         ui->actionDelete->setIcon(QIcon());
@@ -1242,12 +1315,14 @@ void SoftProjector::updateEditActions()
 
     // Set Edit Action Menu Visibility
     ui->actionNew->setVisible(ctab == 1 || ctab == 2 || ctab == 3 || ctab == 4);
+    ui->actionNewFromOpenXML->setVisible(ctab == 1);
     ui->actionEdit->setVisible(ctab == 1 || ctab == 2 || ctab == 4);
     ui->actionCopy->setVisible(ctab == 1 || ctab == 4);
     ui->actionDelete->setVisible(ctab == 0 || ctab == 1 || ctab == 2 || ctab == 3 || ctab == 4);
 
     // Set Edit Action Menu enabled
     ui->actionNew->setEnabled(ctab == 1 || ctab == 2 || ctab == 3 || ctab == 4);
+    ui->actionNewFromOpenXML->setEnabled(ctab == 1);
     ui->actionEdit->setEnabled(ctab == 1 || ctab == 2 || ctab == 4);
     ui->actionCopy->setEnabled(ctab == 1 || ctab == 4);
     ui->actionDelete->setEnabled(ctab == 0 || ctab == 1 || ctab == 2 || ctab == 3 || ctab == 4);
@@ -1268,6 +1343,51 @@ void SoftProjector::on_actionNew_triggered()
         addMediaToLibrary();
     else if(ctab == 4)
         newAnnouncement();
+}
+
+void SoftProjector::on_actionNewFromOpenXML_triggered()
+{
+    if (!editWidget->isHidden())
+    {
+        QMessageBox ms(this);
+        ms.setWindowTitle(tr("Cannot create a new song"));
+        ms.setText(tr("Another song is already been edited."));
+        ms.setInformativeText(tr("Please save and/or close current edited song before edited a different song."));
+        ms.setIcon(QMessageBox::Information);
+        ms.exec();
+        return;
+    }
+
+    bool ok = false;
+    QString openXml = QInputDialog::getMultiLineText(this,
+                                                     tr("New Song from OpenXML"),
+                                                     tr("Paste OpenXML song here:"),
+                                                     QString(),
+                                                     &ok);
+    if (!ok)
+        return;
+
+    openXml = openXml.trimmed();
+    if (openXml.isEmpty())
+        return;
+
+    QString title = extractOpenXmlTagValue(openXml, QStringLiteral("title"));
+    QString lyrics = extractOpenXmlTagValue(openXml, QStringLiteral("lyrics"));
+
+    if (title.isEmpty() || lyrics.isEmpty())
+    {
+        QMessageBox ms(this);
+        ms.setWindowTitle(tr("Cannot import OpenXML song"));
+        ms.setText(tr("Could not find required OpenXML tags."));
+        ms.setInformativeText(tr("The OpenXML content must include <title>...</title> and <lyrics>...</lyrics>."));
+        ms.setIcon(QMessageBox::Warning);
+        ms.exec();
+        return;
+    }
+
+    editWidget->show();
+    editWidget->setNewFromOpenXml(title, normalizeOpenXmlLyrics(lyrics));
+    editWidget->activateWindow();
 }
 
 void SoftProjector::on_actionEdit_triggered()

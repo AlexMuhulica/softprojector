@@ -590,7 +590,9 @@ void BibleSettingWidget::updateSecondaryBibleMenu()
     secondary_bibles.removeOne(pbible);
 
     secondary_id_list = bible_id_list;
-    secondary_id_list.removeAt(ui->comboBoxPrimaryBible->currentIndex());
+    int primaryIndex = ui->comboBoxPrimaryBible->currentIndex();
+    if (primaryIndex >= 0 && primaryIndex < secondary_id_list.size())
+        secondary_id_list.removeAt(primaryIndex);
     ui->comboBoxSecondaryBible->clear();
     ui->comboBoxSecondaryBible->addItem(tr("None"));
     ui->comboBoxSecondaryBible->addItems(secondary_bibles);
@@ -611,7 +613,9 @@ void BibleSettingWidget::updateSecondaryBibleMenu2()
     secondary_bibles2.removeOne(pbible);
 
     secondary_id_list2 = bible_id_list;
-    secondary_id_list2.removeAt(ui->comboBoxPrimaryBible2->currentIndex());
+    int primaryIndex = ui->comboBoxPrimaryBible2->currentIndex();
+    if (primaryIndex >= 0 && primaryIndex < secondary_id_list2.size())
+        secondary_id_list2.removeAt(primaryIndex);
     ui->comboBoxSecondaryBible2->clear();
     ui->comboBoxSecondaryBible2->addItem(tr("None"));
     ui->comboBoxSecondaryBible2->addItems(secondary_bibles2);
@@ -632,7 +636,9 @@ void BibleSettingWidget::updateSecondaryBibleMenu3()
     secondary_bibles3.removeOne(pbible);
 
     secondary_id_list3 = bible_id_list;
-    secondary_id_list3.removeAt(ui->comboBoxPrimaryBible3->currentIndex());
+    int primaryIndex = ui->comboBoxPrimaryBible3->currentIndex();
+    if (primaryIndex >= 0 && primaryIndex < secondary_id_list3.size())
+        secondary_id_list3.removeAt(primaryIndex);
     ui->comboBoxSecondaryBible3->clear();
     ui->comboBoxSecondaryBible3->addItem(tr("None"));
     ui->comboBoxSecondaryBible3->addItems(secondary_bibles3);
@@ -653,7 +659,9 @@ void BibleSettingWidget::updateSecondaryBibleMenu4()
     secondary_bibles4.removeOne(pbible);
 
     secondary_id_list4 = bible_id_list;
-    secondary_id_list4.removeAt(ui->comboBoxPrimaryBible4->currentIndex());
+    int primaryIndex = ui->comboBoxPrimaryBible4->currentIndex();
+    if (primaryIndex >= 0 && primaryIndex < secondary_id_list4.size())
+        secondary_id_list4.removeAt(primaryIndex);
     ui->comboBoxSecondaryBible4->clear();
     ui->comboBoxSecondaryBible4->addItem(tr("None"));
     ui->comboBoxSecondaryBible4->addItems(secondary_bibles4);
@@ -681,7 +689,9 @@ void BibleSettingWidget::updateTrinaryBibleMenu()
         trinary_bibles.removeOne(sbible);
 
         trinary_id_list = secondary_id_list;
-        trinary_id_list.removeAt(ui->comboBoxSecondaryBible->currentIndex()-1);
+        int secondaryIndex = ui->comboBoxSecondaryBible->currentIndex() - 1;
+        if (secondaryIndex >= 0 && secondaryIndex < trinary_id_list.size())
+            trinary_id_list.removeAt(secondaryIndex);
         ui->comboBoxTrinaryBible->clear();
         ui->comboBoxTrinaryBible->addItem(tr("None"));
         ui->comboBoxTrinaryBible->addItems(trinary_bibles);
@@ -709,7 +719,9 @@ void BibleSettingWidget::updateTrinaryBibleMenu2()
         trinary_bibles.removeOne(sbible);
 
         trinary_id_list2 = secondary_id_list2;
-        trinary_id_list2.removeAt(ui->comboBoxSecondaryBible2->currentIndex()-1);
+        int secondaryIndex = ui->comboBoxSecondaryBible2->currentIndex() - 1;
+        if (secondaryIndex >= 0 && secondaryIndex < trinary_id_list2.size())
+            trinary_id_list2.removeAt(secondaryIndex);
         ui->comboBoxTrinaryBible2->clear();
         ui->comboBoxTrinaryBible2->addItem(tr("None"));
         ui->comboBoxTrinaryBible2->addItems(trinary_bibles);
@@ -737,7 +749,9 @@ void BibleSettingWidget::updateTrinaryBibleMenu3()
         trinary_bibles.removeOne(sbible);
 
         trinary_id_list3 = secondary_id_list3;
-        trinary_id_list3.removeAt(ui->comboBoxSecondaryBible3->currentIndex()-1);
+        int secondaryIndex = ui->comboBoxSecondaryBible3->currentIndex() - 1;
+        if (secondaryIndex >= 0 && secondaryIndex < trinary_id_list3.size())
+            trinary_id_list3.removeAt(secondaryIndex);
         ui->comboBoxTrinaryBible3->clear();
         ui->comboBoxTrinaryBible3->addItem(tr("None"));
         ui->comboBoxTrinaryBible3->addItems(trinary_bibles);
@@ -765,7 +779,9 @@ void BibleSettingWidget::updateTrinaryBibleMenu4()
         trinary_bibles.removeOne(sbible);
 
         trinary_id_list4 = secondary_id_list4;
-        trinary_id_list4.removeAt(ui->comboBoxSecondaryBible4->currentIndex()-1);
+        int secondaryIndex = ui->comboBoxSecondaryBible4->currentIndex() - 1;
+        if (secondaryIndex >= 0 && secondaryIndex < trinary_id_list4.size())
+            trinary_id_list4.removeAt(secondaryIndex);
         ui->comboBoxTrinaryBible4->clear();
         ui->comboBoxTrinaryBible4->addItem(tr("None"));
         ui->comboBoxTrinaryBible4->addItems(trinary_bibles);
@@ -785,7 +801,9 @@ void BibleSettingWidget::updateOperatorBibleMenu()
     operator_bibles.removeOne(pbible);
 
     operator_id_list = bible_id_list;
-    operator_id_list.removeAt(ui->comboBoxPrimaryBible->currentIndex());
+    int primaryIndex = ui->comboBoxPrimaryBible->currentIndex();
+    if (primaryIndex >= 0 && primaryIndex < operator_id_list.size())
+        operator_id_list.removeAt(primaryIndex);
     ui->comboBoxOperatorBible->clear();
     ui->comboBoxOperatorBible->addItem(tr("Same as primary Bible"));
     ui->comboBoxOperatorBible->addItems(operator_bibles);

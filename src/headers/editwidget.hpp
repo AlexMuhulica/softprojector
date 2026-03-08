@@ -42,6 +42,7 @@ public slots:
     void setCopy(Song copy);
     void setEdit(Song sEdit);
     void setNew();
+    void setNewFromOpenXml(const QString &title, const QString &lyrics);
     QStringList categories();
     void retranslateUis();
 

@@ -239,6 +239,7 @@
      <string>&amp;Edit</string>
     </property>
     <addaction name="actionNew"/>
+      <addaction name="actionNewFromOpenXML"/>
     <addaction name="actionEdit"/>
     <addaction name="actionCopy"/>
     <addaction name="actionDelete"/>
@@ -518,6 +519,11 @@
    </property>
    <property name="shortcut">
     <string>Ctrl+N</string>
+   </property>
+  </action>
+  <action name="actionNewFromOpenXML">
+   <property name="text">
+    <string/>
    </property>
   </action>
   <action name="actionEdit">

@@ -286,7 +286,34 @@ void EditWidget::setNew()
     resetUiItems();
     new_song.songText = tr("Verse 1\n - words of verse go here\n\nRefrain\n"
                            "- words of Chorus/Refrain\ngo here\n\nVerse 2\n - words of verse go here");
-    addNewSong(new_song,tr("Add a new Songbook"),tr("Select a Songbook to which you want to add a song"));
+
+    editSong = new_song;
+    ui->textEditSong->setPlainText(new_song.songText);
+    is_new = true;
+
+    QSqlQuery sq;
+    sq.exec("SELECT id, name FROM Songbooks ORDER BY id LIMIT 1");
+
+    if (sq.next())
+    {
+        QString songbook_id = sq.value(0).toString();
+        QString songbook_name = sq.value(1).toString();
+        int last = song_database.lastUser(songbook_id);
+        ui->songbook_label->setText(songbook_name);
+        ui->lineEditSongNumber->setText(QString::number(last));
+        add_to_songbook = songbook_name;
+    }
+    else
+    {
+        addSongbook();
+    }
+}
+
+void EditWidget::setNewFromOpenXml(const QString &title, const QString &lyrics)
+{
+    setNew();
+    ui->lineEditTitle->setText(title.trimmed());
+    ui->textEditSong->setPlainText(lyrics.trimmed());
 }
 
 void EditWidget::addNewSong(Song song, QString msgNewSongbook, QString msgCaption)

@@ -1,0 +1,45 @@
+name: Windows Build
+
+# Wann soll die Action starten? 
+# Bei jedem Push oder manuell per Knopfdruck (workflow_dispatch)
+on:
+  push:
+    branches: [ "master", "main" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    # 1. Holt deinen Code aus dem Repository
+    - name: Code auschecken
+      uses: actions/checkout@v4
+
+    # 2. Installiert Qt 6 für Windows (mit MinGW Compiler)
+    - name: Qt installieren
+      uses: jurplel/install-qt-action@v3
+      with:
+        version: '6.5.3'
+        target: 'desktop'
+        arch: 'win64_mingw'
+
+    # 3. Kompiliert das Projekt im src-Ordner
+    - name: Kompilieren (qmake & make)
+      run: |
+        cd src
+        qmake softProjector.pro
+        mingw32-make
+
+    # 4. Sammelt alle Windows-Bibliotheken (DLLs) zusammen
+    - name: windeployqt ausführen
+      run: |
+        cd src/release
+        windeployqt softprojector.exe
+
+    # 5. Packt den fertigen Ordner als ZIP und stellt ihn als Download bereit
+    - name: Fertige App hochladen (Artifact)
+      uses: actions/upload-artifact@v4
+      with:
+        name: SoftProjector-Windows
+        path: src/release/
