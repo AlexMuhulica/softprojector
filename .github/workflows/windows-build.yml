@@ -45,7 +45,7 @@ jobs:
     # 6. Erzeugt ein Setup.exe mit Inno Setup
     - name: Installer bauen (Inno Setup)
       run: |
-        "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" installer\SoftProjector.iss
+        & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" "installer\SoftProjector.iss"
 
     # 7. Lädt den fertigen Installer als Artifact hoch
     - name: Setup hochladen (Artifact)
