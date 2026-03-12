@@ -31,22 +31,46 @@ int const dbVer = 2;
 
 bool connect(QString database_file)
 {
+    // Ensure the directory exists and is writable
+    QFileInfo fileInfo(database_file + "spData.sqlite");
+    QDir dbDir = fileInfo.absoluteDir();
+    
+    if (!dbDir.exists())
+    {
+        if (!dbDir.mkpath("."))
+        {
+            QMessageBox mb;
+            mb.setText("spData Error\n"
+                       "Could not create database directory:\n" + dbDir.absolutePath() + "\n\n"
+                       "Please check file permissions and try again.");
+            mb.setWindowTitle("Database Connection Error");
+            mb.setIcon(QMessageBox::Critical);
+            mb.exec();
+            return false;
+        }
+    }
+    
     database_file += "spData.sqlite";
-    bool database_exists = ( QFile::exists(database_file) );
+    bool database_exists = (QFile::exists(database_file));
 
     QSqlDatabase db = QSqlDatabase::addDatabase("QSQLITE");
     db.setDatabaseName(database_file);
     if (!db.open())
     {
+        QString errorMsg = "spData Error\n"
+                           "Could not connect to the database spData.sqlite!\n\n"
+                           "File path: " + database_file + "\n\n"
+                           "Following Errors:\n"
+                           + db.lastError().databaseText() + "\n"
+                           + db.lastError().driverText() + "\n\n"
+                           + "Possible causes:\n"
+                           "- QtSQL SQLite driver not installed\n"
+                           "- Permission denied to create/access the database file\n"
+                           "- Disk is full\n\n"
+                           "This is a Fatal Error. Please make sure that all QtSql libraries are included.\n"
+                           "The program will terminate";
         QMessageBox mb;
-        mb.setText("spData Error"
-                   "Could not connect to the database spData.sqlite!\n\n"
-                   "Following Errors:\n"
-                   + db.lastError().databaseText() + "\n"
-                   + db.lastError().driverText() +"\n"
-                   + db.databaseName()
-                   + "\n\nThis is a Fatal Error. Please make sure that all QtSql libraries are inlcuded."
-                   "\nThe program will terminate");
+        mb.setText(errorMsg);
         mb.setWindowTitle("Database Connection Error");
         mb.setIcon(QMessageBox::Critical);
         mb.exec();
@@ -54,7 +78,7 @@ bool connect(QString database_file)
     }
     else
     {
-        // If no files exited, then database has been created now we need to fill it
+        // If no files existed, then database has been created now we need to fill it
         if(!database_exists)
         {
             QSqlQuery sq;
@@ -120,84 +144,68 @@ int main(int argc, char *argv[])
 
 //    QTextCodec::setCodecForTr(QTextCodec::codecForName("utf8"));
 
-    // Look for the database in all the same places that the QSql module will look,
-    // and display a friendly error if it was not found:
+    // Look for the database in the proper application data directory
+    // Use QStandardPaths for better cross-platform compatibility
     QString database_dir;
-#ifdef Q_WS_WIN
-    // If running on Windows, check if SoftProjector is Installed.
-    // If it is installed, then provide proper directory for database.
-    QDir d;
-    QString cur_app_path = a.applicationDirPath();
-    //    if(cur_app_path.contains(QString("C:%1Program Files").arg(d.separator())))
-    if(cur_app_path.contains("C:/Program Files") || cur_app_path.contains("C:\\Program Files"))
+#ifdef Q_OS_WIN
+    // Use Windows AppData directory for database storage
+    // First try to use ProgramData (for system-wide installation)
+    QString appDataPath = QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation);
+    QDir dataDir(appDataPath);
+    
+    if (!dataDir.exists())
     {
-        // Check if it is on Windows Vista and Later or before Vista
-        bool is_vista = (QSysInfo::WindowsVersion >= QSysInfo::WV_VISTA);
-        if(is_vista)
+        dataDir.mkpath(".");
+    }
+    
+    // Create SoftProjector subdirectory if it doesn't exist
+    if (!dataDir.exists("SoftProjector"))
+    {
+        if (!dataDir.mkdir("SoftProjector"))
         {
-            d.cd(d.rootPath());
-            if(d.cd("ProgramData"))
+            // If we can't create in global data location, fall back to AppData
+            appDataPath = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
+            dataDir.setPath(appDataPath);
+            if (!dataDir.exists())
             {
-                // Check if 'SoftProjector directory exists, if not, create one
-                if(d.cd("SoftProjector"))
-                    database_dir = d.absolutePath() + d.separator();
-                else
-                {
-                    d.mkdir("SoftProjector");
-                    if(d.cd("SoftProjector"))
-                        database_dir = d.absolutePath() + d.separator();
-                    else
-                        database_dir = cur_app_path + d.separator();
-                }
+                dataDir.mkpath(".");
             }
-            else if(d.cd("Public"))
-            {
-                // Check if 'SoftProjector directory exists, if not, create one
-                if(d.cd("SoftProjector"))
-                    database_dir = d.absolutePath() + d.separator();
-                else
-                {
-                    d.mkdir("SoftProjector");
-                    if(d.cd("SoftProjector"))
-                        database_dir = d.absolutePath() + d.separator();
-                    else
-                        database_dir = cur_app_path + d.separator();
-                }
-            }
-            else
-                database_dir = cur_app_path + d.separator();
-        }
-        else
-        {
-            d.cd(d.homePath());
-            d.cdUp();
-            if(d.cd("All Users"))
-            {
-                if(d.cd("Application Data"))
-                {
-                    // Check if 'SoftProjector directory exists, if not, create one
-                    if(d.cd("SoftProjector"))
-                        database_dir = d.absolutePath() + d.separator();
-                    else
-                    {
-                        d.mkdir("SoftProjector");
-                        if(d.cd("SoftProjector"))
-                            database_dir = d.absolutePath() + d.separator();
-                        else
-                            database_dir = cur_app_path + d.separator();
-                    }
-                }
-                else
-                    database_dir = cur_app_path + d.separator();
-            }
-            else
-                database_dir = cur_app_path + d.separator();
         }
     }
+    
+    // Navigate to SoftProjector directory
+    if (dataDir.cd("SoftProjector") || dataDir.path().endsWith("SoftProjector"))
+    {
+        database_dir = dataDir.absolutePath() + QDir::separator();
+    }
     else
-        database_dir = cur_app_path + QDir::separator();
+    {
+        // Last resort: use application directory
+        database_dir = a.applicationDirPath() + QDir::separator();
+    }
 #else
-    database_dir = a.applicationDirPath() + QDir::separator();
+    // On non-Windows systems, use home directory
+    QString appDataPath = QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation);
+    QDir dataDir(appDataPath);
+    
+    if (!dataDir.exists())
+    {
+        dataDir.mkpath(".");
+    }
+    
+    if (!dataDir.exists("SoftProjector"))
+    {
+        dataDir.mkdir("SoftProjector");
+    }
+    
+    if (dataDir.cd("SoftProjector"))
+    {
+        database_dir = dataDir.absolutePath() + QDir::separator();
+    }
+    else
+    {
+        database_dir = a.applicationDirPath() + QDir::separator();
+    }
 #endif
 #ifdef Q_OS_WIN
     // Use Dark Theme
